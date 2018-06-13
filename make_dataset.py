@@ -41,21 +41,6 @@ with open("text_files/targets.txt","w") as f3 :
 					data = data + aug_sentences
 					targets = targets + aug_targets
 
-				# else :
-				# 	data.append(" ".join(tokenized_line))
-				# 	targets.append(" ".join(['0' for i in range(len(tokenized_line))]))
-				# 	new_sent = tokenized_line[:]
-				# 	new_target = ['0' for i in range(len(tokenized_line))]
-				# 	for i,word in enumerate(tokenized_line) :
-				# 		if word in confusion_dict.keys() :
-				# 			randomint = randint(0,len(confusion_dict[word]))
-				# 			if randomint != 0 :
-				# 				new_target[i] = '1'
-				# 				new_sent[i] = confusion_dict[word][randomint-1]
-				# 	new_sent = " ".join(new_sent)
-				# 	new_target = " ".join(new_target)
-				# 	data.append(new_sent)	
-				# 	targets.append(new_target)
 
 				if len(data) > 100000 :
 					for data_point in data :

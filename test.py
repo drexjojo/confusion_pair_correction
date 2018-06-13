@@ -1,15 +1,20 @@
 import numpy as np    
 import pickle
 import keras
+import time
 import tensorflow as tf
 from keras.preprocessing import sequence
 from keras.models import Model, load_model
 from keras.layers import Input, LSTM, Dense, Embedding, Bidirectional, Concatenate
+from keras.models import model_from_json
 from nltk.tokenize import TweetTokenizer
 
 tokenizer = TweetTokenizer()
 
-model = load_model('./pre_trained_models/model.h5')
+with open('pre_trained_models/model.json', 'r') as f:
+    model = model_from_json(f.read())
+model.load_weights("pre_trained_models/model_weight.hdf5")
+# model = load_model('./pre_trained_models/model.h5')
 # model.load_weights('./pre_trained_models/model_weights.h5')
 encoder_model = load_model("./pre_trained_models/encoder_model.h5")
 # encoder_model.load_weights('./pre_trained_models/encoder_model_weights.h5')
@@ -23,16 +28,21 @@ with open("./pickle_files/word_to_index.pkl",'rb') as f:
 with open("./pickle_files/confusion_dict.pkl",'rb') as f:
     confusion_dict = pickle.load(f)
 
-
 confusion_words = confusion_dict.keys()
 MAX_ENCODER_SEQUENCE_LENGTH = 20
 MAX_DECODER_SEQUENCE_LENGTH = 20
-LATENT_DIM = 300
-BATCH_SIZE = 1000
-EPOCHS = 100
 EMBEDDING_DIM = 200
 len_input_vocab = len(word_to_index.keys())
 len_output_vocab = 4
+
+def process(sentence,decoded_sentence) :
+    ans = ""
+    for i,pred in enumerate(decoded_sentence) :
+        if pred != '3' and pred != '1':
+            # print (i)
+            ans = ans + sentence[i] + " "
+
+    return ans
 
 
 def inference(input_seq):
@@ -66,8 +76,9 @@ input_test_sentences = []
 
 print("[INFO] -> Starting Testing")
 
-with open("text_files/test_set.txt") as f:
+with open("text_files/eval_data.txt") as f:
     for line in f.readlines() :
+        line = line.split("</>")[0]
         tokenized_line = tokenizer.tokenize(line)
         input_test_sentences.append(tokenized_line)
 
@@ -83,6 +94,10 @@ padded_input_test = sequence.pad_sequences(X, maxlen=MAX_ENCODER_SEQUENCE_LENGTH
 generated_ans = []
 for seq_index in range(len(input_test)):
     input_seq = padded_input_test[seq_index: seq_index + 1]
+
+    start_time = time.time()
     decoded_sentence = inference(input_seq)
+    print("TIME : ",time.time()-start_time)
+    answer = process(input_test_sentences[seq_index],decoded_sentence)
     print(input_test_sentences[seq_index])
     print(decoded_sentence)

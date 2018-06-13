@@ -4,9 +4,10 @@ import keras
 import tensorflow as tf
 from keras.preprocessing import sequence
 from keras.models import Model, load_model
+from keras.callbacks import ModelCheckpoint
 from keras.layers import Input, LSTM, Dense, Embedding, Bidirectional, Concatenate
 
-config = tf.ConfigProto( device_count = {'GPU': 4 , 'CPU': 40} ) 
+config = tf.ConfigProto( device_count = {'GPU': 4 , 'CPU': 30} ) 
 sess = tf.Session(config=config) 
 keras.backend.set_session(sess)
 # from keras.backend import manual_variable_initialization 
@@ -34,8 +35,8 @@ with open("./pickle_files/decoder_target_data.pkl",'rb') as f:
 confusion_words = confusion_dict.keys()
 MAX_ENCODER_SEQUENCE_LENGTH = 20
 MAX_DECODER_SEQUENCE_LENGTH = 20
-LATENT_DIM = 300
-BATCH_SIZE = 1000
+LATENT_DIM = 400
+BATCH_SIZE = 4000
 EPOCHS = 100
 EMBEDDING_DIM = 200
 len_input_vocab = len(word_to_index.keys())
@@ -86,24 +87,43 @@ encoder_states = [state_h, state_c]
 decoder_inputs = Input(shape=(None, len_output_vocab))
 decoder_lstm = LSTM(LATENT_DIM * 2, return_sequences=True, return_state=True)
 decoder_outputs, _, _ = decoder_lstm(decoder_inputs, initial_state=encoder_states)
-decoder_dense = Dense(len_output_vocab, activation='softmax')
+decoder_dense = Dense(len_output_vocab, activation='relu')
 decoder_outputs = decoder_dense(decoder_outputs)
 
 
 model = Model([encoder_inputs, decoder_inputs], decoder_outputs)
 model.compile(optimizer='Adam', loss='categorical_crossentropy')
 
+# filepath="./pre_trained_models/model_weight.hdf5"
+# checkpoint = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+# callbacks_list = [checkpoint]
+
+#-----------UNCOMMENT TO USE PRE-TRAINED MODELS ---------------------------------
+# model = load_model('./pre_trained_models/model.h5')
+# model.load_weights('./pre_trained_models/model_weight.hdf5')
+# encoder_model = load_model("./pre_trained_models/encoder_model.h5")
+# encoder_model.load_weights('./pre_trained_models/encoder_model_weights.h5')
+# decoder_model = load_model("./pre_trained_models/decoder_model.h5")
+# decoder_model.load_weights('./pre_trained_models/decoder_model_weights.h5')
+# print("[INFO] -> Trained models loaded")
+# model.compile(optimizer='Adam', loss='categorical_crossentropy')
+# encoder_model.compile(optimizer='Adam', loss='categorical_crossentropy')
+# decoder_model.compile(optimizer='Adam', loss='categorical_crossentropy')
+#---------------------------------------------------------------------------------
+
 print(model.summary())
 
 model.fit([padded_input, decoder_input_data], decoder_target_data,
           batch_size=BATCH_SIZE,
           epochs=EPOCHS,
-          validation_split=0.05)
+          validation_split=0.005,
+          callbacks=callbacks_list,
+          verbose=1) 
 
 with open('./pre_trained_models/model.json', 'w') as f:
     f.write(model.to_json())
-model.save('./pre_trained_models/model.h5')
-model.save_weights('./pre_trained_models/model_weights.h5')
+# model.save('./pre_trained_models/model.h5')
+# model.save_weights('./pre_trained_models/model_weights.h5')
 
 encoder_model = Model(encoder_inputs, encoder_states)
 decoder_state_input_h = Input(shape=(LATENT_DIM*2,))
@@ -129,16 +149,9 @@ with open('./pre_trained_models/decoder_model.json', 'w') as f:
     f.write(decoder_model.to_json())
 decoder_model.save('./pre_trained_models/decoder_model.h5')
 decoder_model.save_weights('./pre_trained_models/decoder_model_weights.h5')
+
 print("[INFO] -> Training Done")
 
 
-#-----------UNCOMMENT TO USE PRE-TRAINED MODELS ---------------------------------
-# model = load_model('./pre_trained_models/model.h5')
-# model.load_weights('./pre_trained_models/model_weights.h5')
-# encoder_model = load_model("./pre_trained_models/encoder_model.h5")
-# encoder_model.load_weights('./pre_trained_models/encoder_model_weights.h5')
-# decoder_model = load_model("./pre_trained_models/decoder_model.h5")
-# decoder_model.load_weights('./pre_trained_models/decoder_model_weights.h5')
-# print("[INFO] -> Trained models loaded")
-#---------------------------------------------------------------------------------
+
 
