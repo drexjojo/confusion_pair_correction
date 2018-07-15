@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np    
 import pickle
 import keras
@@ -9,7 +10,7 @@ from keras.layers import Input, LSTM, Dense, Embedding, Bidirectional, Concatena
 
 
 def train_model(language) :
-    config = tf.ConfigProto( device_count = {'GPU': 4 , 'CPU': 30} ) 
+    config = tf.ConfigProto( device_count = {'GPU': 4 , 'CPU': 30} )  #Specify the number of CPUs and GPUs
     sess = tf.Session(config=config) 
     keras.backend.set_session(sess)
     # from keras.backend import manual_variable_initialization 
@@ -33,14 +34,14 @@ def train_model(language) :
     with open(language+"/pickle_files/decoder_target_data.pkl",'rb') as f:
         decoder_target_data = pickle.load(f)
 
-
+    print("[INFO] -> Done reading pickel files !")
     confusion_words = confusion_dict.keys()
     MAX_ENCODER_SEQUENCE_LENGTH = 20
     MAX_DECODER_SEQUENCE_LENGTH = 20
     LATENT_DIM = 400
-    BATCH_SIZE = 4000
-    EPOCHS = 1
-    EMBEDDING_DIM = 200
+    BATCH_SIZE = 5000
+    EPOCHS = 50
+    EMBEDDING_DIM = 300
     len_input_vocab = len(word_to_index.keys())
     len_output_vocab = 4
 
@@ -56,13 +57,16 @@ def train_model(language) :
     # encoder_states = [state_h, state_c]
 
 
-    # UNCOMMENT TO USE GLOVE EMBEDDINGS
+    # UNCOMMENT TO USE GLOVE OR FastText EMBEDDINGS
     embeddings_index = {}
-    f = open(language+'/glove.6B.200d.txt')
-    for line in f:
+    f = open(language+'/pre_trained_models/wiki.fr.vec') #Use correct path here for the pre_trained embeddings
+    for counter,line in enumerate(f):
         values = line.split()
-        word = values[0]
-        coefs = np.asarray(values[1:], dtype='float32')
+        try:
+            coefs = np.asarray(values[1:], dtype='float32')
+            word = values[0]
+        except ValueError as e:
+            pass
         embeddings_index[word] = coefs
     f.close()
 

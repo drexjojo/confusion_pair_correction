@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import numpy as np    
 import pickle
 import keras
@@ -8,47 +9,23 @@ from keras.preprocessing import sequence
 from keras.models import Model, load_model
 from keras.layers import Input, LSTM, Dense, Embedding, Bidirectional, Concatenate
 from keras.models import model_from_json
-from nltk.tokenize import TweetTokenizer
+from nltk.tokenize import word_tokenize
 from ast import literal_eval
 
-tokenizer = TweetTokenizer()
 
-with open('pre_trained_models/model.json', 'r') as f:
-    model = model_from_json(f.read())
-model.load_weights("pre_trained_models/model_weight.hdf5")
-encoder_model = load_model("./pre_trained_models/encoder_model.h5")
-decoder_model = load_model("./pre_trained_models/decoder_model.h5")
-language_model = gensim.models.Word2Vec.load("pre_trained_models/language_model")
-print("[INFO] -> Trained models loaded")
-
-
-with open("./pickle_files/word_to_index.pkl",'rb') as f:
-    word_to_index = pickle.load(f)
-
-with open("./pickle_files/confusion_dict.pkl",'rb') as f:
-    confusion_dict = pickle.load(f)
-
-confusion_words = confusion_dict.keys()
-MAX_ENCODER_SEQUENCE_LENGTH = 20
-MAX_DECODER_SEQUENCE_LENGTH = 20
-EMBEDDING_DIM = 200
-len_input_vocab = len(word_to_index.keys())
-len_output_vocab = 4
-
-
-def load_evaluation_data():
+def load_evaluation_data(language):
     input_sentences = []
     input_indices = []
     input_targets = []
-    with open("text_files/eval_data.txt") as f :
+    with open(language+"/text_files/eval_data.txt") as f :
         for line in f.readlines() :
             sent = line.split("</>")[0]
-            tokenized_line = tokenizer.tokenize(sent)
+            tokenized_line = word_tokenize(sent,language = 'french')
             input_sentences.append(tokenized_line)
             ind = literal_eval(line.split("</>")[1].strip())
             input_indices.append(ind)
 
-    with open("text_files/eval_targets.txt") as f :
+    with open(language+"/text_files/eval_targets.txt") as f :
         for line in f.readlines() :
             temp = []
             for num in line.split() :
@@ -57,44 +34,72 @@ def load_evaluation_data():
 
     return input_sentences,input_indices,input_targets
 
-def make_evaluation_data(filename):
+def make_evaluation_data(filename,language):
+    with open(language+"/pickle_files/confusion_dict.pkl",'rb') as f:
+        confusion_dict = pickle.load(f)
+
+    confusion_words = confusion_dict.keys()
+
     data = []
     targets = []
     indices = []
-    with open(filename) as f:
-        for line in f.readlines():
-            tokenized_line = tokenizer.tokenize(line)
-            if len(tokenized_line) <= 20 :
-                aug_sentences = [" ".join(tokenized_line)]
-                aug_targets = [" ".join(['0' for i in range(len(tokenized_line))])]
-                aug_indices = []
-                for i,word in enumerate(tokenized_line) :
-                    if word in confusion_words :
-                        aug_indices.append(i)
-                        temp_sentences = aug_sentences[:]
-                        for alt_word in confusion_dict[word] :
-                            if alt_word != word :
-                                for j,sent in enumerate(temp_sentences) :
-                                    new_sent = tokenizer.tokenize(sent)
-                                    new_sent[i] = alt_word
-                                    new_sent = " ".join(new_sent)
-                                    aug_sentences.append(new_sent)
-                                    new_target = aug_targets[j].split()
-                                    new_target[i] = '1'
-                                    new_target = " ".join(new_target)
-                                    aug_targets.append(new_target)
+    count = 0
 
-                data = data + aug_sentences
-                targets = targets + aug_targets
-                for j in range(len(aug_sentences)):
-                    indices.append(aug_indices)
+    with open(language+"/text_files/eval_data.txt",'w') as f1 :
+        with open(language+"/text_files/eval_targets.txt",'w') as f2 :
+            with open(filename) as f:
+                for line in f.readlines():
+                    if count%10000 == 0 :
+                        print("Sentences done : ",count+1)
+                    count += 1
+                    tokenized_line = word_tokenize(line,language = 'french')
+                    if len(tokenized_line) <= 20 :
+                        aug_sentences = [" ".join(tokenized_line)]
+                        aug_targets = [" ".join(['0' for i in range(len(tokenized_line))])]
+                        aug_indices = []
+                        for i,word in enumerate(tokenized_line) :
+                            if word in confusion_words :
+                                aug_indices.append(i)
+                                temp_sentences = aug_sentences[:]
+                                for alt_word in confusion_dict[word] :
+                                    if alt_word != word :
+                                        for j,sent in enumerate(temp_sentences) :
+                                            new_sent = word_tokenize(sent,language = 'french')
+                                            new_sent[i] = alt_word
+                                            new_sent = " ".join(new_sent)
+                                            aug_sentences.append(new_sent)
+                                            new_target = aug_targets[j].split()
+                                            new_target[i] = '1'
+                                            new_target = " ".join(new_target)
+                                            aug_targets.append(new_target)
+                        
 
-    with open("text_files/eval_data.txt",'w') as f :
-        for i,datapoint in enumerate(data) :
-            f.write(datapoint+ " </> "+str(indices[i]) + "\n")
-    with open("text_files/eval_targets.txt",'w') as f :
-        for tar in targets :
-            f.write(tar + "\n")
+                        data = data + aug_sentences
+                        targets = targets + aug_targets
+                        for j in range(len(aug_sentences)):
+                            indices.append(aug_indices)
+
+                    if len(data) > 10000 :
+                        for i,datapoint in enumerate(data) :
+                            f1.write(datapoint+ " </> "+str(indices[i]) + "\n")
+                        data = []
+                        indices = []
+
+                    if len(targets) > 10000 :
+                        for data_point in targets :
+                            f2.write(data_point + "\n")
+                        targets = []
+
+            if len(data) > 0 :
+                for i,datapoint in enumerate(data) :
+                    f1.write(datapoint+ " </> "+str(indices[i]) + "\n")
+                data = []
+                indices = []
+
+            if len(targets) > 0 :
+                for data_point in targets :
+                    f2.write(data_point + "\n")
+                targets = []
 
 
 def process(sentence,decoded_sentence) :
@@ -104,29 +109,14 @@ def process(sentence,decoded_sentence) :
             ans = ans + word + " "
         elif decoded_sentence[i] == '1' :
             if sentence[i].lower() in confusion_dict.keys() :
-                if len(confusion_dict[word]) == 1 :
-                    ans = ans + confusion_dict[word.lower()][0] + " "
-                else :
-                    print("came here")
-                    score = float("-inf")
-                    chosen_word = confusion_dict[word.lower()][0]
-                    for alt_word in confusion_dict[word] :
-                        temp_sentence = sentence[:]
-                        temp_sentence[i] = alt_word
-                        temp_score = language_model.score(temp_sentence)[0]
-                        if temp_score > score :
-                            score = temp_score
-                            chosen_word = alt_word
-                    ans = ans + chosen_word + " "
-
-
+                ans = ans + confusion_dict[word.lower()][0] + " "
             else :
                 print("failed :( ")
                 ans = ans + sentence[i] + " "
     return ans
 
 
-def inference(input_seq):
+def inference(input_seq,encoder_model,decoder_model,len_output_vocab,MAX_DECODER_SEQUENCE_LENGTH):
     states_value = encoder_model.predict(input_seq)
     target_seq = np.zeros((1, 1, len_output_vocab))
     target_seq[0, 0, 2] = 1.
@@ -150,8 +140,44 @@ def inference(input_seq):
 
     return decoded_sentence
 
-def evaluate_1(padded_input_test,input_test,input_indices,input_targets):
 
+
+#-------------------- Evaluation-----------------------------------------------------
+
+def evaluate(language):
+ 
+    with open(language+'/pre_trained_models/model.json', 'r') as f:
+        model = model_from_json(f.read())
+    model.load_weights(language+"/pre_trained_models/model_weight.hdf5")
+    encoder_model = load_model(language+"/pre_trained_models/encoder_model.h5")
+    decoder_model = load_model(language+"/pre_trained_models/decoder_model.h5")
+    # language_model = gensim.models.Word2Vec.load(language+"/pre_trained_models/language_model")
+    print("[INFO] -> Trained models loaded")
+
+    with open(language+"/pickle_files/word_to_index.pkl",'rb') as f:
+        word_to_index = pickle.load(f)
+
+    with open(language+"/pickle_files/confusion_dict.pkl",'rb') as f:
+        confusion_dict = pickle.load(f)
+
+    
+    confusion_words = confusion_dict.keys()
+    len_input_vocab = len(word_to_index.keys())
+    len_output_vocab = 4
+    MAX_ENCODER_SEQUENCE_LENGTH = 20
+    MAX_DECODER_SEQUENCE_LENGTH = 20
+
+      
+    input_test_sentences = []
+    input_test_sentences,input_indices,input_targets = load_evaluation_data(language)
+
+    input_test = input_test_sentences[:]
+    for i, sent in enumerate(input_test_sentences):
+        input_test[i] = [w if w in word_to_index.keys() else "UNK" for w in sent]
+    X = np.asarray([[word_to_index[w] for w in sent] for sent in input_test])
+    padded_input_test = sequence.pad_sequences(X, maxlen=MAX_ENCODER_SEQUENCE_LENGTH)
+
+    print("[INFO] -> Starting Evaluations")
     true_positives = 0
     true_negatives = 0
     false_positives = 0
@@ -161,7 +187,7 @@ def evaluate_1(padded_input_test,input_test,input_indices,input_targets):
         input_seq = padded_input_test[seq_index: seq_index + 1]
 
         start_time = time.time()
-        decoded_sentence = inference(input_seq)
+        decoded_sentence = inference(input_seq,encoder_model,decoder_model,len_output_vocab,MAX_DECODER_SEQUENCE_LENGTH)
         time_taken = time_taken + time.time() - start_time
 
         print("input : "," ".join(input_test_sentences[seq_index]))
@@ -192,37 +218,6 @@ def evaluate_1(padded_input_test,input_test,input_indices,input_targets):
     print("Avg Time taken per sentences : ", time_taken/len(input_test))
 
 
-
-#-------------------- Evaluation-----------------------------------------------------
-input_test_sentences = []
-
-print("[INFO] -> Starting Evaluations")
-
-input_test_sentences,input_indices,input_targets = load_evaluation_data()
-# make_evaluation_data("text_files/evaluation_set.txt")
-# exit(0)
-input_test = input_test_sentences[:]
-for i, sent in enumerate(input_test_sentences):
-    input_test[i] = [w if w in word_to_index.keys() else "UNK" for w in sent]
-X = np.asarray([[word_to_index[w] for w in sent] for sent in input_test])
-padded_input_test = sequence.pad_sequences(X, maxlen=MAX_ENCODER_SEQUENCE_LENGTH)
-
-evaluate_1(padded_input_test,input_test,input_indices,input_targets)
-
-
-
-
-# generated_ans = []
-# for seq_index in range(len(input_test)):
-#     input_seq = padded_input_test[seq_index: seq_index + 1]
-
-#     # start_time = time.time()
-#     decoded_sentence = inference(input_seq)
-#     # print("TIME : ",time.time()-start_time)
-#     # answer = process(input_test_sentences[seq_index],decoded_sentence)
-#     print(" ".join(input_test_sentences[seq_index]))
-#     print(decoded_sentence)
-#     print("")
 
 
 
