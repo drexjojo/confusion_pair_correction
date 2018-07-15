@@ -11,6 +11,17 @@ Instructions For Training
 > 6) The file _language_/text_files/correct_sentences.txt contains all the correct sentences that the model uses for training.
 > 7) run `python3 main_train.py`
 
+Instructions For Evaluation
+------
+> 1) Choose the language to evaluate.
+> 2) Put the dataset to evaluate in _language_/text_files/evaluation_correct_sentences.txt
+> 3) run `python3 main_eval.py`. This will create correct + incorrect sentences which is saved in _language_/text_files/eval_data.txt and  _language_/text_files/eval_targets.txt contains the corresponding ground truth.
+> 4) open `main_eval.py` and comment out the following lines :
+`make_evaluation_data(language+"/text_files/evaluation_correct_sentences.txt",language)<br/>
+exit(0)`
+> 5) run `python3 main_eval.py` again.
+
+
 File Structure
 ------
 > 1) _language_/text_files/selected_cps.txt contains all the confusion pairs supported.
