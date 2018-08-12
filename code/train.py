@@ -121,7 +121,7 @@ def train_model(language) :
     model.fit([padded_input, decoder_input_data], decoder_target_data,
               batch_size=BATCH_SIZE,
               epochs=EPOCHS,
-              validation_split=0.005,
+              validation_split=0.05,
               callbacks=callbacks_list,
               verbose=1) 
 

@@ -2,8 +2,10 @@ import pickle
 from random import randint
 from nltk.tokenize import TweetTokenizer
 from nltk.tokenize import word_tokenize
+import ipdb
 
 is_skew = True
+
 def make_dataset(language) :
 
 	with open(language+"/pickle_files/confusion_dict.pkl",'rb') as f :
@@ -35,14 +37,18 @@ def make_dataset(language) :
 								for alt_word in confusion_dict[word] :
 									if alt_word != word :
 										for j,sent in enumerate(temp_sentences) :
-											new_sent = word_tokenize(sent,language = language.lower())
+											new_sent = sent.split()
 											new_sent[i] = alt_word
-											new_sent = " ".join(new_sent)
-											aug_sentences.append(new_sent)
 											new_target = aug_targets[j].split()
 											new_target[i] = '1'
+											if len(new_sent) != len(new_target) :
+												ipdb.set_trace()
+											new_sent = " ".join(new_sent)
+											aug_sentences.append(new_sent)
 											new_target = " ".join(new_target)
 											aug_targets.append(new_target)
+
+						
 						if is_skew == True : 
 							if flag == False :
 								if randint(0,10) == 2 :

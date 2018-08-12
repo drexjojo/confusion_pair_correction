@@ -12,7 +12,6 @@ from keras.models import model_from_json
 from nltk.tokenize import word_tokenize
 from ast import literal_eval
 
-
 def load_evaluation_data(language):
     input_sentences = []
     input_indices = []
@@ -20,7 +19,7 @@ def load_evaluation_data(language):
     with open(language+"/text_files/eval_data.txt") as f :
         for line in f.readlines() :
             sent = line.split("</>")[0]
-            tokenized_line = word_tokenize(sent,language = 'french')
+            tokenized_line = sent.split()
             input_sentences.append(tokenized_line)
             ind = literal_eval(line.split("</>")[1].strip())
             input_indices.append(ind)
@@ -52,7 +51,7 @@ def make_evaluation_data(filename,language):
                     if count%10000 == 0 :
                         print("Sentences done : ",count+1)
                     count += 1
-                    tokenized_line = word_tokenize(line,language = 'french')
+                    tokenized_line = word_tokenize(line,language = language.lower())
                     if len(tokenized_line) <= 20 :
                         aug_sentences = [" ".join(tokenized_line)]
                         aug_targets = [" ".join(['0' for i in range(len(tokenized_line))])]
@@ -64,7 +63,7 @@ def make_evaluation_data(filename,language):
                                 for alt_word in confusion_dict[word] :
                                     if alt_word != word :
                                         for j,sent in enumerate(temp_sentences) :
-                                            new_sent = word_tokenize(sent,language = 'french')
+                                            new_sent = sent.split()
                                             new_sent[i] = alt_word
                                             new_sent = " ".join(new_sent)
                                             aug_sentences.append(new_sent)
@@ -101,7 +100,7 @@ def make_evaluation_data(filename,language):
                     f2.write(data_point + "\n")
                 targets = []
 
-
+   
 def process(sentence,decoded_sentence) :
     ans = ""
     for i,word in enumerate(sentence) :
@@ -139,6 +138,43 @@ def inference(input_seq,encoder_model,decoder_model,len_output_vocab,MAX_DECODER
         states_value = [h, c]
 
     return decoded_sentence
+
+
+
+#-------------------- Evaluation-----------------------------------------------------
+
+# def evaluate(language):
+ 
+#     with open(language+'/pre_trained_models/model.json', 'r') as f:
+#         model = model_from_json(f.read())
+#     model.load_weights(language+"/pre_trained_models/model_weight.hdf5")
+#     encoder_model = load_model(language+"/pre_trained_models/encoder_model.h5")
+#     decoder_model = load_model(language+"/pre_trained_models/decoder_model.h5")
+#     # language_model = gensim.models.Word2Vec.load(language+"/pre_trained_models/language_model")
+#     print("[INFO] -> Trained models loaded")
+
+#     with open(language+"/pickle_files/word_to_index.pkl",'rb') as f:
+#         word_to_index = pickle.load(f)
+
+#     with open(language+"/pickle_files/confusion_dict.pkl",'rb') as f:
+#         confusion_dict = pickle.load(f)
+
+    
+#     confusion_words = confusion_dict.keys()
+#     len_input_vocab = len(word_to_index.keys())
+#     len_output_vocab = 4
+#     MAX_ENCODER_SEQUENCE_LENGTH = 20
+#     MAX_DECODER_SEQUENCE_LENGTH = 20
+
+#     print("[INFO] -> Starting Evaluations")  
+#     input_test_sentences = []
+#     input_test_sentences,input_indices,input_targets = load_evaluation_data(language)
+
+#     input_test = input_test_sentences[:]
+#     for i, sent in enumerate(input_test_sentences):
+#         input_test[i] = [w if w in word_to_index.keys() else "UNK" for w in sent]
+#     X = np.asarray([[word_to_index[w] for w in sent] for sent in input_test])
+#     padded_input_test = sequence.pad_sequences(X, maxlen=MAX_ENCODER_SEQUENCE_LENGTH)
 
 
 
