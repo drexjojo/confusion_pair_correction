@@ -4,6 +4,9 @@ English/pickle_files/padded_input.pkl
 English/pickle_files/padded_output.pkl
 
 English/pre_trained_models/glove.6B.200d.txt 
+English/pre_trained_models/decoder_model.h5
+English/pre_trained_models/encoder_model.h5 
+English/pre_trained_models/language_model
 English/pre_trained_models/model_weight.hdf5
 English/pre_trained_models/encoder_model_weights.h5
 English/pre_trained_models/decoder_model_weights.h5
@@ -24,6 +27,9 @@ French/text_files/eval_targets.txt
 French/text_files/evaluation_correct_sentences.txt
 French/text_files/targets.txt
 
-French/pre_trained_models/decoder_model_weights.h5
-French/pre_trained_models/encoder_model_weights.h5
+French/pre_trained_models/wiki.fr.vec 
+French/pre_trained_models/decoder_model.h5
+French/pre_trained_models/encoder_model.h5 
 French/pre_trained_models/model_weight.hdf5
+French/pre_trained_models/encoder_model_weights.h5
+French/pre_trained_models/decoder_model_weights.h5
