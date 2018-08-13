@@ -30,11 +30,10 @@ Pre-processing
 > 1) VOCAB SIZE = 30000
 > 2) MAX SEQUENCE LENGTH = 20
 > 3) The targets are padded with 2 (as the start of sequence tag) and 3 (as the end of sequence tag).
-> 4) The input data is padded with (<s> as start of sequence tag) and (</s> as end of sequence tag).
-> 5) The padded incorrect sentences are vectorized and is stored as  _language_/pickle_files/padded_input.pkl. This is the input to the encoder.
-> 6) The padded output targets are vectorized and is stored as  _language_/pickle_files/decoder_input_data.pkl. This is the input to the decoder.
-> 7) The decoder output data is the same as the padded output targets but offset by one time step. It is stored as _language_/pickle_files/decoder_output_data.pkl
-> 8) run `python3 code/preprocessing.py` to generate padded_input.pkl, decoder_input_data.pkl and decoder_ouput_data.pkl.
+> 4) The padded incorrect sentences are vectorized and is stored as  _language_/pickle_files/padded_input.pkl. This is the input to the encoder.
+> 5) The padded output targets are vectorized and is stored as  _language_/pickle_files/decoder_input_data.pkl. This is the input to the decoder.
+> 6) The decoder output data is the same as the padded output targets but offset by one time step. It is stored as _language_/pickle_files/decoder_output_data.pkl
+> 7) run `python3 code/preprocessing.py` to generate padded_input.pkl, decoder_input_data.pkl and decoder_ouput_data.pkl.
 
 Instructions For Training
 ------
