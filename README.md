@@ -78,8 +78,8 @@ Datasets used for correct sentences : Tatoeba, French News Crawl Articles 2011,2
 Total incorrect sentences generated for training : 18786915 sentences <br>
 Evaluation on  2,276,775 unseen sentences from French News crawl 2007 dataset <br>
 Precision : 0.692038157768896 <br>
-Recall : 0.6897229582976625 <br>
+Recall : 0.6897229582976625 <br><br>
 
 In theory, The current model developed is not optimal for this task because the output space of the decoder is too large. Also, in encoder-decoder models, the ith prediction of the decoder is dependent on the repeat vector (from the encoder) and the i-1th prediction (of the decoder). This works well in Machine translation because the ith word generated is dependent on the word that comes before it. But its not suitable for this task (because the ith 1 is not dependent on the previous 0 or 1).
 <br>
-The future work involves replacing the decoder with a classifier for each confusion pair. The problem will be then formulated as a classification task rather than a generative one which would require much less data to train. 
+The future work involves replacing the decoder with a classifier for each confusion pair. The problem will be then formulated as a classification task rather than a generative one which would require much less data to train. For this an encoder LSTM1 will be used to capture the contextual information of the entire sentence. If the ith word is a confusion word, then LSTM2 is used to capture the context from start_of_sentence to the ith word. The final hidden states of LSTM1 and LSTM2 will then be used as input to a classifier to predict 0 or 1 (0 if the ith word is used correctly or 1 if ith word is used incorrectly).
