@@ -21,7 +21,7 @@ Dataset Creation
 > > This is you’re way of doing things : 0 0 1 0 0 0 0 <br>
 > > This is your way of doing thinks : 0 0 0 0 0 0 1<br>
 > > This is you’re way of doing thinks : 0 0 1 0 0 0 1<br>
-> 3) All data genterated are stroed in _language_/text_files/data.txt
+> 3) All data genterated are stored in _language_/text_files/data.txt
 > 4) All targets generated are stored in _language_/text_files/targets.txt
 > 5) run `python3 code/make_dataset.py` to generate the data and targets.
 
